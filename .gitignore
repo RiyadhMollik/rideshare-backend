@@ -1,0 +1,37 @@
+# Node.js dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor & OS files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# Build files
+dist/
+build/
+.cache/
+out/
+
+# Config files & Secrets
+config/ride-sharing-54f52-firebase-adminsdk-v7oa1-82297cbb2a.json
+notes.txt
