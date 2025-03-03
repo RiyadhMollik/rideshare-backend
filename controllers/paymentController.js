@@ -78,14 +78,11 @@ exports.processPayment = async (req, res) => {
       }
       passenger.wallet_balance = updateBalance(passenger.wallet_balance, -totalUserDeduction);
     }else if (paymentMethod === 'cash') {
-      if (toNumber(passenger.wallet_balance) < serviceCharge) {
-        console.log(passenger.user_id);
-        console.log(serviceCharge);
-        await t.rollback();
-        return res.status(402).json({ message: 'Insufficient wallet balance for service charge' });
-      }
-      passenger.wallet_balance = updateBalance(passenger.wallet_balance, -serviceCharge);
-
+      // if (toNumber(passenger.wallet_balance) < serviceCharge) {
+      //   await t.rollback();
+      //   return res.status(402).json({ message: 'Insufficient wallet balance for service charge' });
+      // }
+      // passenger.wallet_balance = updateBalance(passenger.wallet_balance, -serviceCharge);
       if (toNumber(driver.wallet_balance) < adminCommission) {
         await t.rollback();
         return res.status(402).json({ message: 'Insufficient driver balance for admin commission' });

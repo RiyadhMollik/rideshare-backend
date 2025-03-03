@@ -6,6 +6,7 @@ const TransactionModel = require('../models/transaction');
 const getUserProfile = async (req, res) => {
   const userId = req.user.user_id;
   const user = await User.findByPk(userId);
+  console.log("user:", user);
   if (!user) {
     return res.status(404).json({ message: 'User not found' });
   }
@@ -14,8 +15,8 @@ const getUserProfile = async (req, res) => {
 
 const updateUserProfile = async (req, res) => {
   const userId = req.user.user_id;
-  const { name, profile_picture, address, nid_photo, push_token, phone_number, referral_code } = req.body;
-
+  console.log(req.body);
+  const { name,email,gender, profile_picture, address, nid_photo, push_token, phone_number, referral_code } = req.body;
   try {
     const user = await User.findByPk(userId);
     if (!user) {
@@ -29,6 +30,8 @@ const updateUserProfile = async (req, res) => {
     user.nid_photo = nid_photo || user.nid_photo;
     user.phone_number = phone_number || user.phone_number;
     user.push_token = push_token || user.push_token;
+    user.gender = gender || user.gender;
+    user.email = email || user.email;
 
     // Handle referral_code if provided
     if (referral_code) {
