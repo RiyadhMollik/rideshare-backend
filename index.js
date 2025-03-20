@@ -44,6 +44,7 @@ const io = new Server(server, {
 });
 initializeSocket(io);
 
+app.use('/uploads', express.static('uploads'));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use(express.json());
 app.use(bodyParser.json());

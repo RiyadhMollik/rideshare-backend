@@ -1,11 +1,11 @@
-const  TopUpRequest  = require('../models/topupRequest');  // Assuming the model is named TopUpRequest
-const  User  = require('../models/user');
-const sequelize  = require('../config/database'); // Adjust according to your project
+const TopUpRequest = require('../models/topupRequest');  // Assuming the model is named TopUpRequest
+const User = require('../models/user');
+const sequelize = require('../config/database'); // Adjust according to your project
 const TransactionModel = require('../models/transaction');
 exports.createTopUpRequest = async (req, res) => {
-  const {amount, method, transactionId, image } = req.body;
+  const { amount, method, transactionId, image } = req.body;
 
-  const userId = req.user.user_id; 
+  const userId = req.user.user_id;
   const t = await sequelize.transaction();
 
   try {
@@ -38,15 +38,15 @@ exports.createTopUpRequest = async (req, res) => {
 };
 
 exports.getTopUpRequests = async (req, res) => {
-  const { page = 1, limit = 10, status=null } = req.query; // Default values if not provided
+  const { page = 1, limit = 10, status = null } = req.query; // Default values if not provided
 
   try {
     const whereClause = {};
-  
-      // Add status filter to whereClause only if status is provided (not null)
-      if (status) {
-        whereClause.status = status;
-      }
+
+    // Add status filter to whereClause only if status is provided (not null)
+    if (status) {
+      whereClause.status = status;
+    }
     const offset = (page - 1) * limit;
 
     const topUpRequests = await TopUpRequest.findAndCountAll({
@@ -75,9 +75,9 @@ exports.getTopUpRequests = async (req, res) => {
 
 
 
- exports.approveTopUpRequest = async (req, res) => {
+exports.approveTopUpRequest = async (req, res) => {
   const { topUpRequestId } = req.body; // `topUpRequestId`, `amount`, and `description` are required
-
+  console.log(topUpRequestId);
   try {
     // Find the top-up request
     const topUpRequest = await TopUpRequest.findByPk(topUpRequestId);

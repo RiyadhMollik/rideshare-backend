@@ -30,7 +30,6 @@ exports.createDriverVehicle = async (req, res) => {
 
 exports.updateDriverVehicle = async (req, res) => {
   const { id } = req.params;
-  console.log(id);
   const { vehicleTypeId, image, documents, verified, vehicleDetails, status } = req.body;
 
   try {

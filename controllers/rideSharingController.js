@@ -252,25 +252,28 @@ exports.manageRideRequest = async (req, res) => {
 
 // Get ride details (Driver/Passenger)
 exports.getRideDetails = async (req, res) => {
-
-  //  try {
+    try {
         const { ride_id } = req.params;
         console.log("ride_id:", ride_id);
+
         const ride = await RideSharing.findByPk(ride_id, {
             include: [
-                { model: RideSharingRequest, as: 'RideSharingRequests' }, // correct alias
+                { model: RideSharingRequest, as: 'RideSharingRequests' }, // Ensure alias matches model association
                 { model: User, as: 'driver' }
             ]
         });
+
         if (!ride) {
             return res.status(404).json({ success: false, message: "Ride not found." });
         }
 
         res.status(200).json({ success: true, ride });
-    // } catch (error) {
-    //     res.status(500).json({ success: false, message: "Error fetching ride details.", error });
-    // }
+    } catch (error) {
+        console.error("Error fetching ride details:", error);
+        res.status(500).json({ success: false, message: "Error fetching ride details.", error: error.message });
+    }
 };
+
 
 
 // Get all rides (Driver/Passenger)

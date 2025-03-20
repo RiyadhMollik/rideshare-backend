@@ -1,8 +1,10 @@
 const { Service, serviceVehicle, VehicleType } = require('../models/index');
 
 exports.createService = async (req, res) => {
-  const { name, description, type, imageUrl } = req.body;
-
+  const baseUrl = process.env.BaseUrl;
+  const imageUrl = req.file ? `${baseUrl}/uploads/${req.file.filename}` : null;
+  const { name, description, type} = req.body;
+  
   try {
     const service = await Service.create({
       name,
@@ -10,9 +12,12 @@ exports.createService = async (req, res) => {
       type,
       imageUrl,
     });
+    console.log(service);
 
     res.status(201).json(service);
   } catch (error) {
+    console.log(error);
+
     res.status(500).json({ message: 'Failed to create service', error: error.message });
   }
 };
@@ -36,14 +41,13 @@ exports.getAllServices = async (req, res) => {
 };
 
 exports.addVehicleToService = async (req, res) => {
-  const { serviceId, vehicleTypeId, vehicleName, perKm, enabled, capacity, outsideCity,labourAvailable } = req.body;
-
+  const { serviceId, vehicleTypeId, vehicleName, perKm, enabled, capacity, outsideCity, labourAvailable } = req.body;
+  console.log(serviceId, vehicleTypeId, vehicleName, perKm, enabled, capacity, outsideCity, labourAvailable);
   try {
     const service = await Service.findByPk(serviceId);
     if (!service) {
       return res.status(404).json({ message: 'Service not found' });
     }
-
     const vehicleType = await VehicleType.findByPk(vehicleTypeId);
     if (!vehicleType) {
       return res.status(404).json({ message: 'Vehicle type not found' });
@@ -52,7 +56,7 @@ exports.addVehicleToService = async (req, res) => {
     const vehicle = await serviceVehicle.create({
       serviceId,
       vehicleTypeId,
-      vehicleTypeName : vehicleType.name,
+      vehicleTypeName: vehicleType.name,
       description: vehicleType.description,
       image: vehicleType.image,
       extraOptions: vehicleType.extraOptions,
@@ -70,28 +74,48 @@ exports.addVehicleToService = async (req, res) => {
   }
 };
 
-exports.editService = async (req, res) => {
-  const { serviceId } = req.params;
-  const { name, description, type, imageUrl } = req.body;
+exports.ServiceDetails = async (req, res) => {
+  const { id } = req.params;
+  console.log(id);
 
   try {
-    const service = await Service.findByPk(serviceId);
+    const service = await Service.findByPk(id);
     if (!service) {
       return res.status(404).json({ message: 'Service not found' });
     }
-
-    service.name = name !== undefined ? name : service.name;
-    service.description = description !== undefined ? description : service.description;
-    service.type = type !== undefined ? type : service.type;
-    service.imageUrl = imageUrl !== undefined ? imageUrl : service.imageUrl;
-
-    await service.save();
-
     res.json(service);
   } catch (error) {
     res.status(500).json({ message: 'Failed to edit service', error: error.message });
   }
 };
+
+exports.editService = async (req, res) => {
+  const { serviceId } = req.params;
+  const baseUrl = process.env.BaseUrl;
+  const imageUrl = req.file ? `${baseUrl}/uploads/${req.file.filename}` : null;
+
+  const { name, description, type} = req.body;
+  try {
+    const service = await Service.findByPk(serviceId);
+    if (!service) {
+      return res.status(404).json({ message: "Service not found" });
+    }
+
+    service.name = name !== undefined ? name : service.name;
+    service.description = description !== undefined ? description : service.description;
+    service.type = type !== undefined ? type : service.type;
+    if (imageUrl) {
+      service.imageUrl = imageUrl;
+    }
+
+    await service.save();
+
+    res.json({ success: true, message: "Service updated successfully!", service });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to edit service", error: error.message });
+  }
+};
+
 
 exports.deleteService = async (req, res) => {
   const { serviceId } = req.params;
@@ -126,7 +150,7 @@ exports.updateServiceVehicle = async (req, res) => {
     vehicle.enabled = enabled !== undefined ? enabled : vehicle.enabled;
     vehicle.capacity = capacity !== undefined ? capacity : vehicle.capacity;
     vehicle.outsideCity = outsideCity !== undefined ? outsideCity : vehicle.outsideCity;
-    vehicle.labourAvailable = labourAvailable!== undefined? labourAvailable: vehicle.labourAvailable
+    vehicle.labourAvailable = labourAvailable !== undefined ? labourAvailable : vehicle.labourAvailable
 
     await vehicle.save();
 

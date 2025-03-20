@@ -1,6 +1,6 @@
 const RideRequest = require('../models/RideRequest');
 const Driver = require('../models/riderModel');
-
+const rideRequestModel = require('../models/rideRequestModel');
 exports.getRideRequest =async(req,res)=>{
   const rideid =req.query.id;
  try {
@@ -126,7 +126,8 @@ exports.approveRideRequest = async (req, res) => {
 
 exports.getAllNearbyRideRequests = async (req, res) => {
   const { serviceId, vehicleType, latitude, longitude } = req.query;
-
+  console.log(serviceId, vehicleType);
+  
   try {
     const rideRequests = await RideRequest.getAllNearby(serviceId, vehicleType, latitude, longitude);
     res.status(200).json(rideRequests);
@@ -196,3 +197,23 @@ exports.updateRideStatus = async (req, res) => {
   }
 };
 
+exports.getRideRequestById = async (req, res) => {
+  try {
+    const { id } = req.params; // Ensure id is extracted correctly
+
+    if (!id) {
+      return res.status(400).json({ error: "Ride request ID is required" });
+    }
+
+    const rideRequest = await rideRequestModel.findByPk(id); // Use findByPk or findOne
+
+    if (!rideRequest) {
+      return res.status(404).json({ error: "Ride request not found" });
+    }
+
+    res.status(200).json(rideRequest);
+  } catch (error) {
+    console.error("Error fetching ride request:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};

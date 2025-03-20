@@ -47,6 +47,7 @@ const serviceVehicle = sequelize.define('Vehicle', {
   extraOptions: {
     type: DataTypes.JSON,
     allowNull: true,
+    defaultValue: [],
   },
   perKm: {
     type: DataTypes.FLOAT,

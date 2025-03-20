@@ -7,12 +7,14 @@ exports.createVehicleType = async (req, res) => {
     const vehicleType = await VehicleType.create({
       name,
       description,
-      image,
+      image: '',
       extraOptions,
     });
 
     res.status(201).json(vehicleType);
   } catch (error) {
+    console.log(error);
+    
     res.status(500).json({ message: 'Failed to create vehicle type', error: error.message });
   }
 };
@@ -28,6 +30,19 @@ exports.getAllVehicleTypes = async (req, res) => {
     res.json(vehicleTypes);
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch vehicle types', error: error.message });
+  }
+};
+
+exports.vehicleTypeDetails = async (req, res) => {
+  const { vehicleTypeId } = req.params;
+  try {
+    const vehicleType = await VehicleType.findByPk(vehicleTypeId);
+    if (!vehicleType) {
+      return res.status(404).json({ message: 'Vehicle type not found' });
+    }
+    res.json(vehicleType);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to edit vehicle type', error: error.message });
   }
 };
 

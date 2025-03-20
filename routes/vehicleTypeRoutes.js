@@ -10,6 +10,8 @@ router.post('/vehicle-types', adminOnly, VehicleTypeController.createVehicleType
 // Get all vehicle types
 router.get('/vehicle-types', VehicleTypeController.getAllVehicleTypes);
 
+router.get('/vehicle-types/:vehicleTypeId', VehicleTypeController.vehicleTypeDetails);
+
 // Edit a vehicle type (Admin Only)
 router.put('/vehicle-types/:vehicleTypeId', adminOnly, VehicleTypeController.editVehicleType);
 

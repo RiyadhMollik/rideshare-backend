@@ -87,8 +87,8 @@ const getAllUsers = async (req, res) => {
       limit: parseInt(limit),
       offset: parseInt(offset)
     });
-
-    // Send the result as a JSON response
+    console.log(users);
+    
     res.json(users);
   } catch (error) {
     console.error('Error fetching users:', error);
@@ -194,7 +194,7 @@ const getUserTransactions = async (req, res) => {
 // New function to update any user profile (Admin Only)
 const adminUpdateUserProfile = async (req, res) => {
   const userId = req.params.id;
-  const { name, profile_picture, address, nid_photo, push_token, phone_number, user_type, is_verified } = req.body;
+  const { name,wallet_balance, profile_picture, address, nid_photo, push_token, phone_number, user_type, is_verified } = req.body;
 
   try {
     const user = await User.findByPk(userId);
@@ -210,6 +210,7 @@ const adminUpdateUserProfile = async (req, res) => {
     user.push_token = push_token || user.push_token;
     user.user_type = user_type || user.user_type;
     user.is_verified = is_verified !== undefined ? is_verified : user.is_verified;
+    user.wallet_balance = wallet_balance || user.wallet_balance;
 
     await user.save();
     res.json({ message: 'User profile updated successfully', user });
