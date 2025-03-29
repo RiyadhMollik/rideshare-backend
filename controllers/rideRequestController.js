@@ -28,22 +28,23 @@ exports.getAllRideRequests = async (req, res) => {
   const { status = null, page = 1, limit = 10 } = req.query;
 
   try {
+    const sortCondition = { createdAt: -1 };
     // Call the service method with the provided status, page, and limit
     const { rideRequests, pagination } = await RideRequest.getAllRideRequests(
       status,
       parseInt(page),   // Convert page to integer
-      parseInt(limit)   // Convert limit to integer
-    );
-
+      parseInt(limit),  // Convert limit to integer
+      sortCondition 
+    );    
     // Send the response with ride requests and pagination info
     res.status(200).json({
       success: true,
       data: rideRequests,
       pagination: {
-        totalItems: pagination.totalItems,
-        totalPages: pagination.totalPages,
-        currentPage: pagination.currentPage,
-        pageSize: pagination.pageSize
+        totalItems: pagination.total_items,
+        totalPages: pagination.total_pages,
+        currentPage: pagination.current_page,
+        pageSize: pagination.page_size
       }
     });
   } catch (error) {

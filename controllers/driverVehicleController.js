@@ -30,7 +30,8 @@ exports.createDriverVehicle = async (req, res) => {
 
 exports.updateDriverVehicle = async (req, res) => {
   const { id } = req.params;
-  const { vehicleTypeId, image, documents, verified, vehicleDetails, status } = req.body;
+  const { vehicleTypeId, image, document, verified, vehicleDetails, status } = req.body;
+  console.log(req.body);
 
   try {
     // Fetch the driver vehicle by ID
@@ -52,11 +53,12 @@ exports.updateDriverVehicle = async (req, res) => {
 
     // Optional updates for other fields
     if (image) driverVehicle.image = image;
-    if (documents) driverVehicle.documents = documents;
+    if (document) driverVehicle.documents = document;
     if (typeof verified !== 'undefined') driverVehicle.verified = verified; // Explicitly check for undefined to allow boolean false
     if (vehicleDetails) driverVehicle.vehicleDetails = vehicleDetails;
     if (status) driverVehicle.status = status;
-
+    console.log(driverVehicle);
+    
     // Save the updated driver vehicle
     await driverVehicle.save();
 
@@ -160,5 +162,27 @@ exports.getDriverVehicleById = async (req, res) => {
   } catch (error) {
     console.error('Error in getDriverVehicleById controller:', error);
     res.status(500).json({ message: 'Failed to fetch driver vehicle', error: error.message });
+  }
+};
+
+exports.approveDriverVehicle = async (req, res) => {
+  const { id } = req.params;
+  console.log(id);
+  try {
+    const driverVehicle = await DriverVehicle.findByPk(id);
+    console.log(driverVehicle);
+
+    if (!driverVehicle) {
+      return res.status(404).json({ message: 'Driver vehicle not found' });
+    }
+
+    driverVehicle.verified = true;
+    driverVehicle.status = 'verified';
+    await driverVehicle.save();
+
+    res.json({ message: 'Driver vehicle approved successfully', driverVehicle });
+  } catch (error) {
+    console.error('Error in approveDriverVehicle controller:', error);
+    res.status(500).json({ message: 'Failed to approve driver vehicle', error: error.message });
   }
 };

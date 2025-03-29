@@ -1,8 +1,7 @@
 const { Service, serviceVehicle, VehicleType } = require('../models/index');
 
 exports.createService = async (req, res) => {
-  const baseUrl = process.env.BaseUrl;
-  const imageUrl = req.file ? `${baseUrl}/uploads/${req.file.filename}` : null;
+  const imageUrl = req.file ? `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}` : null;
   const { name, description, type} = req.body;
   
   try {
@@ -91,10 +90,9 @@ exports.ServiceDetails = async (req, res) => {
 
 exports.editService = async (req, res) => {
   const { serviceId } = req.params;
-  const baseUrl = process.env.BaseUrl;
-  const imageUrl = req.file ? `${baseUrl}/uploads/${req.file.filename}` : null;
-
+  const imageUrl = req.file ? `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}` : null;
   const { name, description, type} = req.body;
+  console.log(imageUrl);
   try {
     const service = await Service.findByPk(serviceId);
     if (!service) {

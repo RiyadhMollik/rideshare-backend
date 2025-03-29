@@ -1,6 +1,8 @@
 const express = require('express');
 const http = require('http');
 const cors = require('cors');
+const multer = require("multer");
+const path = require('path');
 const { ApolloServer } = require('@apollo/server');
 const { expressMiddleware } = require('@apollo/server/express4');
 const { initializeSocket } = require('./utils/socket');
@@ -66,6 +68,27 @@ app.get('/', (req, res) => {
   res.json({ message: 'Welcome to the API v11' });
 });
 
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/"); // Save images in the 'uploads' directory
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
+  },
+});
+
+// File upload middleware
+const upload = multer({ storage: storage });
+
+// Image upload route
+app.post("/upload", upload.single("image"), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: "No file uploaded" });
+  }
+
+  const imageUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+  res.status(200).json({ message: "Image uploaded successfully", imageUrl });
+});
 // Define createApolloGraphqlServer function
 const createApolloGraphqlServer = async () => {
   const graphqlServer = new ApolloServer({

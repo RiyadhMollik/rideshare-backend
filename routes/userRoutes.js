@@ -9,7 +9,7 @@ router.post('/profile', authenticateToken, updateUserProfile);
 router.get('/walletbalance', authenticateToken, getUserWalletBalance);
 router.put('/walletbalance', adminOnly, updateUserWalletBalance);
 router.get('/wallet-transactions', authenticateToken, getUserTransactions);
-router.get('/all', authenticateToken, adminOnly, getAllUsers);
+router.get('/all',  getAllUsers);
 router.get('/:id', authenticateToken, adminOnly, getUserById);
 router.delete("/users/:userId", deleteUser);
 

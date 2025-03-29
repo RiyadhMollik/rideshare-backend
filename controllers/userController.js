@@ -16,7 +16,7 @@ const getUserProfile = async (req, res) => {
 const updateUserProfile = async (req, res) => {
   const userId = req.user.user_id;
   console.log(req.body);
-  const { name,email,gender, profile_picture, address, nid_photo, push_token, phone_number, referral_code } = req.body;
+  const { name,email,gender, profile_picture, address, nid_photo, push_token, phone_number, referral_code , user_type } = req.body;
   try {
     const user = await User.findByPk(userId);
     if (!user) {
@@ -32,6 +32,7 @@ const updateUserProfile = async (req, res) => {
     user.push_token = push_token || user.push_token;
     user.gender = gender || user.gender;
     user.email = email || user.email;
+    user.user_type = user_type || user.user_type;
 
     // Handle referral_code if provided
     if (referral_code) {
@@ -81,20 +82,37 @@ const getAllUsers = async (req, res) => {
       filter.user_type = user_type;
     }
 
+    // Fetch the total count of users based on the filter
+    const totalCount = await User.count({
+      where: filter,
+    });
+
     // Fetch users with filtering and pagination
     const users = await User.findAll({
       where: filter,
       limit: parseInt(limit),
-      offset: parseInt(offset)
+      offset: parseInt(offset),
     });
-    console.log(users);
     
-    res.json(users);
+    // Calculate the total number of pages
+    const totalPages = Math.ceil(totalCount / limit);
+
+    // Return users along with pagination info
+    res.json({
+      users,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages,
+        totalCount,
+        limit: parseInt(limit),
+      },
+    });
   } catch (error) {
     console.error('Error fetching users:', error);
     res.status(500).json({ message: 'Failed to fetch users' });
   }
 };
+
 
 
 // New function to get a single user by ID (Admin Only)
@@ -227,17 +245,18 @@ const adminUpdateUserProfile = async (req, res) => {
 
 const deleteUser = async (req, res) => {
   try {
-      const { userId } = req.params;
+    const { userId } = req.params;
 
-      const deletedUser = await User.findByIdAndDelete(userId);
+    // Find the user by ID
+    const deletedUser = await User.destroy({ where: { user_id: userId } });
 
-      if (!deletedUser) {
-          return res.status(404).json({ message: "User not found" });
-      }
+    if (!deletedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-      res.status(200).json({ message: "User deleted successfully" });
+    res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
-      res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 

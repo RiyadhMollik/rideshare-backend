@@ -1,16 +1,19 @@
 const { VehicleType, serviceVehicle } = require('../models/index');
 
 exports.createVehicleType = async (req, res) => {
-  const { name, description, image, extraOptions } = req.body;
+  const imageUrl = req.file ? `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}` : null;
+
+  const { name, description, extraOptions } = req.body;
 
   try {
     const vehicleType = await VehicleType.create({
       name,
       description,
-      image: '',
+      image: imageUrl,
       extraOptions,
     });
-
+    console.log(vehicleType);
+    
     res.status(201).json(vehicleType);
   } catch (error) {
     console.log(error);
