@@ -13,7 +13,7 @@ router.get('/vehicle-types', VehicleTypeController.getAllVehicleTypes);
 router.get('/vehicle-types/:vehicleTypeId', VehicleTypeController.vehicleTypeDetails);
 
 // Edit a vehicle type (Admin Only)
-router.put('/vehicle-types/:vehicleTypeId',upload.single('image'), adminOnly, VehicleTypeController.editVehicleType);
+router.patch('/vehicle-types/:vehicleTypeId',upload.single('image'), adminOnly, VehicleTypeController.editVehicleType);
 
 // Delete a vehicle type (Admin Only)
 router.delete('/vehicle-types/:vehicleTypeId', adminOnly, VehicleTypeController.deleteVehicleType);

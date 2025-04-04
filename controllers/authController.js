@@ -94,7 +94,7 @@ const sendOtp = async (req, res) => {
   }
 };
 const verifyOtp = async (req, res) => {
-  const { phone_number, otp } = req.body;
+  const { phone_number, otp , push_token } = req.body;
 
   const user = await User.findOne({ where: { phone_number } });
   if (!user) {
@@ -108,6 +108,7 @@ const verifyOtp = async (req, res) => {
   if (user.otp === otp) {
     user.otp = null;
     user.otp_expires_at = null;
+    user.push_token = push_token;
     await user.save();
 
     const token = jwt.sign({ user_id: user.user_id }, process.env.JWT_SECRET);

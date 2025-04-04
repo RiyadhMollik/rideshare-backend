@@ -19,19 +19,22 @@ const rideRequestRoutes = require('./routes/rideRequestRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const ratingRoutes = require('./routes/ratingRoutes');
 const rideSharingRoutes = require('./routes/rideShareRoutes');
-const settingsRoutes= require('./routes/settingsRoutes');
-const busRoutes= require('./routes/busroutes');
+const settingsRoutes = require('./routes/settingsRoutes');
+const busRoutes = require('./routes/busroutes');
 const walletRoutes = require('./routes/walletRoutes');
 const typeDefs = require('./graphql/typeDefs/rideSchema');
 const resolvers = require('./graphql/resolvers/rideResolvers');
+const { Op } = require("sequelize"); // Import Sequelize Op
 const { validateToken } = require('./utils/jwtUtils');
-
+const serviceAccount = require("./config/ride-sharing-54f52-firebase-adminsdk-v7oa1-82297cbb2a.json");
+const admin = require("firebase-admin");
 const app = express();
 const server = http.createServer(app);
 require('dotenv').config();
+const User = require("./models/user");
 app.use(cors({
   origin: 'http://localhost:5173', // Your frontend URL
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true, // Allow credentials
 }));
@@ -59,13 +62,52 @@ app.use('/api', rideRequestRoutes);
 app.use('/api', paymentRoutes);
 app.use('/api', ratingRoutes);
 app.use('/api', rideSharingRoutes);
-app.use('/api',settingsRoutes);
+app.use('/api', settingsRoutes);
 app.use('/api', busRoutes);
-app.use('/api/wallet',walletRoutes);
+app.use('/api/wallet', walletRoutes);
+
 app.get('/', (req, res) => {
   console.log('Welcome to the API v11');
-  
+
   res.json({ message: 'Welcome to the API v11' });
+});
+
+app.post("/send-notification", async (req, res) => {
+  const { title, body } = req.body;
+
+  try {
+    // Fetch all users with a non-null push_token
+    const users = await User.findAll({
+      where: {
+        push_token: {
+          [Op.not]: null // Use imported Sequelize Op
+        }
+      },
+      attributes: ["push_token"], // Only fetch push_token
+    });
+
+    // Extract push tokens into an array
+    const tokens = users.map(user => user.push_token).filter(Boolean);
+
+    // Ensure we have valid tokens
+    if (tokens.length === 0) {
+      return res.status(400).json({ error: "No valid push tokens found" });
+    }
+
+    // Create notification message
+    const message = {
+      notification: { title, body },
+      tokens, // Send to multiple tokens
+    };
+
+    // Send push notifications
+    const response = await admin.messaging().sendEachForMulticast(message);
+
+    res.status(200).json({ success: true, response });
+  } catch (error) {
+    console.error("Error sending notification:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
 const storage = multer.diskStorage({
@@ -109,8 +151,8 @@ const applyApolloMiddleware = async () => {
     '/graphql',
     expressMiddleware(apolloServer, {
       context: async ({ req }) => {
-        const token = req.headers['authorization']?.split(' ')[1]; 
-        const user = validateToken(token); 
+        const token = req.headers['authorization']?.split(' ')[1];
+        const user = validateToken(token);
         return { user };
       },
     })

@@ -7,7 +7,7 @@ const { adminOnly } = require('../middleware/adminMiddleware');
 router.post('/ride-request', authenticateToken,  rideRequestController.createRideRequest);
 router.get('/ride-requests/all',authenticateToken, rideRequestController.getAllUserRideRequests);
 router.get('/ride-requests',  rideRequestController.getAllRideRequests);
-router.get('/ride-requests/nearby',   rideRequestController.getAllNearbyRideRequests);
+router.get('/ride-requests/nearby',authenticateToken,   rideRequestController.getAllNearbyRideRequests);
 router.post('/ride-requests/bid', authenticateToken,  rideRequestController.addBid);
 router.post('/ride-requests/bid/status', rideRequestController.updateBidStatus);
 router.post('/ride-request/update-status', authenticateToken, rideRequestController.updateRideStatus);

@@ -131,6 +131,8 @@ exports.getAllNearbyRideRequests = async (req, res) => {
   
   try {
     const rideRequests = await RideRequest.getAllNearby(serviceId, vehicleType, latitude, longitude);
+    console.log(rideRequests);
+    
     res.status(200).json(rideRequests);
   } catch (error) {
     console.error('Error in getAllNearbyRideRequests controller:', error);
@@ -162,6 +164,8 @@ exports.addBid = async (req, res) => {
 
 exports.updateBidStatus = async (req, res) => {
   const { rideRequestId, riderId, status } = req.body;
+  // console.log(status);
+  
   try {
     const updatedRideRequest = await RideRequest.updateBidStatus(rideRequestId, riderId, status);
     // Emit event to notify all clients in the specific rideRequest room of bid status update
@@ -176,21 +180,23 @@ exports.updateBidStatus = async (req, res) => {
 exports.updateRideStatus = async (req, res) => {
   const { rideRequestId, newStatus, otp } = req.body; // Extract OTP from request body if provided
   const userId = req.user.user_id; // Extracted from JWT
-
+  console.log(newStatus);
+  
   try {
     // Update ride status and verify OTP if necessary
     const updateResponse = await RideRequest.updateRideReqStatus(rideRequestId, newStatus, otp);
-
+    console.log(updateResponse);
     // Handle OTP verification failure
     if (updateResponse.error) {
       return res.status(400).json({ message: updateResponse.error });
     }
-
     // Emit event to notify all clients in the specific rideRequest room of status update
     const io = req.app.get('socketio');
+    console.log(`rideRequest:${rideRequestId} newStatus:${newStatus}`);
+    
     io.to(`rideRequest:${rideRequestId}`).emit('rideStatusUpdate', { status: newStatus });
-    io.to(`rideRequest:${rideRequestId}`).emit('rideStatusUpdate', {status: newStatus});
-
+    console.log('ride status updated');
+    
     res.status(200).json({ message: 'Ride status updated successfully' });
   } catch (error) {
     console.error('Error in updateRideStatus controller:', error);

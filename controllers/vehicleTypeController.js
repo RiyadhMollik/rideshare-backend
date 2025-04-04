@@ -3,7 +3,10 @@ const { VehicleType, serviceVehicle } = require('../models/index');
 exports.createVehicleType = async (req, res) => {
   const imageUrl = req.file ? `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}` : null;
 
-  const { name, description, extraOptions } = req.body;
+  const { name, description } = req.body;
+  const extraOptions = JSON.parse(req.body.extraOptions);
+  console.log(extraOptions);
+  
 
   try {
     const vehicleType = await VehicleType.create({
@@ -11,9 +14,7 @@ exports.createVehicleType = async (req, res) => {
       description,
       image: imageUrl,
       extraOptions,
-    });
-    console.log(vehicleType);
-    
+    });    
     res.status(201).json(vehicleType);
   } catch (error) {
     console.log(error);
@@ -51,8 +52,11 @@ exports.vehicleTypeDetails = async (req, res) => {
 
 exports.editVehicleType = async (req, res) => {
   const { vehicleTypeId } = req.params;
-  const { name, description, image, extraOptions } = req.body;
+  const imageUrl = req.file ? `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}` : null;
 
+  const { name, description } = req.body;
+  const extraOptions = JSON.parse(req.body.extraOptions);
+  console.log(extraOptions);
   try {
     const vehicleType = await VehicleType.findByPk(vehicleTypeId);
     if (!vehicleType) {
@@ -61,7 +65,7 @@ exports.editVehicleType = async (req, res) => {
 
     vehicleType.name = name !== undefined ? name : vehicleType.name;
     vehicleType.description = description !== undefined ? description : vehicleType.description;
-    vehicleType.image = image !== undefined ? image : vehicleType.image;
+    vehicleType.image = imageUrl !== undefined ? imageUrl : vehicleType.image;
     vehicleType.extraOptions = extraOptions !== undefined ? extraOptions : vehicleType.extraOptions;
 
     await vehicleType.save();

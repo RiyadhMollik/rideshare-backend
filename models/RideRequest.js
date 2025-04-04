@@ -252,7 +252,8 @@ class RideRequest {
         { status: newStatus },
         { where: { id: rideRequestId } }
       );
-
+      console.log(RideRequestModel);
+      
       return { success: true };
     } catch (err) {
       console.error('Failed to update ride request status:', err);
@@ -307,7 +308,8 @@ class RideRequest {
       const rideRequests = await RideRequestModel.findAll({
         where: whereClause,
         limit: parseInt(limit),
-        offset: parseInt(offset)
+        offset: parseInt(offset),
+        order: [['createdAt', 'DESC']]
       });
       // Calculate total pages
       const total_pages = Math.ceil(totalRideRequests / limit);
