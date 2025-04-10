@@ -12,6 +12,7 @@ router.get('/driver-vehicles', adminOnly, DriverVehicleController.getAllDriverVe
 
 // Get all driver vehicles by driver ID
 router.get('/driver-vehicles/driver', authenticateToken, DriverVehicleController.getDriverVehiclesByDriverId);
+router.get('/driver-vehicles/driver/:driverId', DriverVehicleController.getDriverVehiclesByDriverId);
 
 // Get a single driver vehicle by ID
 router.get('/driver-vehicles/:id', DriverVehicleController.getDriverVehicleById);

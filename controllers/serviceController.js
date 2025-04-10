@@ -40,8 +40,7 @@ exports.getAllServices = async (req, res) => {
 };
 
 exports.addVehicleToService = async (req, res) => {
-  const { serviceId, vehicleTypeId, vehicleName, perKm, enabled, capacity, outsideCity, labourAvailable } = req.body;
-  console.log(serviceId, vehicleTypeId, vehicleName, perKm, enabled, capacity, outsideCity, labourAvailable);
+  const { serviceId, vehicleTypeId, vehicleName, perKm, enabled, capacity, outsideCity, labourAvailable ,commissionType , commission } = req.body;
   try {
     const service = await Service.findByPk(serviceId);
     if (!service) {
@@ -64,7 +63,9 @@ exports.addVehicleToService = async (req, res) => {
       enabled,
       capacity,
       outsideCity,
-      labourAvailable
+      labourAvailable,
+      commissionType,
+      commission
     });
 
     res.status(201).json(vehicle);
@@ -72,6 +73,102 @@ exports.addVehicleToService = async (req, res) => {
     res.status(500).json({ message: 'Failed to add vehicle to service', error: error.message });
   }
 };
+
+exports.updateServiceToVehicle = async (req, res) => {
+  console.log(req.body);
+  
+  const {
+    serviceId,
+    vehicleTypeId,
+    vehicleName,
+    perKm,
+    enabled,
+    capacity,
+    outsideCity,
+    labourAvailable,
+    commissionType,
+    commission
+  } = req.body;
+
+  const { id } = req.params;
+
+  try {
+    const vehicle = await serviceVehicle.findByPk(id);
+    if (!vehicle) {
+      return res.status(404).json({ message: 'Service vehicle not found' });
+    }
+
+    const service = await Service.findByPk(serviceId);
+    if (!service) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+
+    const vehicleType = await VehicleType.findByPk(vehicleTypeId);
+    if (!vehicleType) {
+      return res.status(404).json({ message: 'Vehicle type not found' });
+    }
+
+    await vehicle.update({
+      serviceId,
+      vehicleTypeId,
+      vehicleTypeName: vehicleType.name,
+      description: vehicleType.description,
+      image: vehicleType.image,
+      extraOptions: vehicleType.extraOptions,
+      name: vehicleName,
+      perKm,
+      enabled,
+      capacity,
+      outsideCity,
+      labourAvailable,
+      commissionType,
+      commission
+    });
+
+    res.status(200).json({ message: 'Service vehicle updated successfully', vehicle });
+  } catch (error) {
+    console.error('Error updating service vehicle:', error);
+    res.status(500).json({ message: 'Failed to update service vehicle', error: error.message });
+  }
+};
+exports.getAllServiceToVehicles = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    const { count, rows } = await serviceVehicle.findAndCountAll({
+      offset,
+      limit,
+      order: [['id', 'DESC']],
+    });
+
+    res.status(200).json({
+      vehicles: rows,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page,
+      totalItems: count,
+    });
+  } catch (error) {
+    console.error('Error fetching service vehicles:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+exports.getServiceToVehicleById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const vehicle = await serviceVehicle.findByPk(id);
+    if (!vehicle) {
+      return res.status(404).json({ message: 'Service vehicle not found' });
+    }
+    res.status(200).json(vehicle);
+  } catch (error) {
+    console.error('Error fetching service vehicle by ID:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 
 exports.ServiceDetails = async (req, res) => {
   const { id } = req.params;

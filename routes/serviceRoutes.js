@@ -15,6 +15,9 @@ router.get('/services/:id', ServiceController.ServiceDetails);
 
 // Add a vehicle to a service (Admin Only)
  router.post('/services/vehicles', adminOnly, ServiceController.addVehicleToService);
+ router.get('/services/vehicles/list', adminOnly, ServiceController.getAllServiceToVehicles);
+ router.get('/services/vehicles/:id',  ServiceController.getServiceToVehicleById);
+ router.put('/services/vehicles/update/:id',  ServiceController.updateServiceToVehicle);
 
 // Edit a service (Admin Only)
  router.put('/services/:serviceId',upload.single('image'),   ServiceController.editService);

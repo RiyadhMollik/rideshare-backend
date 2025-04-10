@@ -1,6 +1,56 @@
 const RideRequest = require('../models/RideRequest');
 const Driver = require('../models/riderModel');
 const rideRequestModel = require('../models/rideRequestModel');
+const { Op } = require('sequelize');
+
+exports.getRideRequestMetrics = async (req, res) => {
+    try {
+        // Total Ride Requests
+        const totalRideRequests = await rideRequestModel.count();
+
+        // Total Ride Places
+        const totalRidePlaces = await rideRequestModel.aggregate('pickup_place', 'DISTINCT', { plain: false });
+        const destinationPlaces = await rideRequestModel.aggregate('destination_place', 'DISTINCT', { plain: false });
+        const allPlaces = [...new Set([...totalRidePlaces.map(p => p['pickup_place']), ...destinationPlaces.map(p => p['destination_place'])])];
+        
+        // Total Ride Canceled
+        const totalRideCanceled = await rideRequestModel.count({
+            where: { status: 'ride_canceled' }
+        });
+
+        // Total Ride Request Pending
+        const totalRideReqPending = await rideRequestModel.count({
+            where: { status: 'pending' }
+        });
+
+        // Total Ride Complete
+        const totalRideComplete = await rideRequestModel.count({
+            where: { status: 'ride_completed' }
+        });
+
+        // Total Bidding/Active
+        const totalBiddingActive = await rideRequestModel.count({
+            where: {
+                status: {
+                    [Op.or]: ['bidding', 'ride_active']
+                }
+            }
+        });
+
+        // Return all metrics as a response
+        res.json({
+            totalRideRequests,
+            totalRidePlaces: allPlaces.length,
+            totalRideCanceled,
+            totalRideReqPending,
+            totalRideComplete,
+            totalBiddingActive
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 exports.getRideRequest =async(req,res)=>{
   const rideid =req.query.id;
  try {
@@ -25,16 +75,15 @@ exports.getAllUserRideRequests = async (req, res) => {
 
 exports.getAllRideRequests = async (req, res) => {
   // Extract query parameters for pagination and status filter
-  const { status = null, page = 1, limit = 10 } = req.query;
+  const { status = null, page = 1, limit = 10 , search } = req.query;
 
   try {
-    const sortCondition = { createdAt: -1 };
     // Call the service method with the provided status, page, and limit
     const { rideRequests, pagination } = await RideRequest.getAllRideRequests(
       status,
       parseInt(page),   // Convert page to integer
       parseInt(limit),  // Convert limit to integer
-      sortCondition 
+      search
     );    
     // Send the response with ride requests and pagination info
     res.status(200).json({

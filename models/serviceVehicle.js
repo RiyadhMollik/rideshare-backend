@@ -27,7 +27,6 @@ const serviceVehicle = sequelize.define('Vehicle', {
     },
     onDelete: 'SET NULL',
   },
- 
   name: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -71,7 +70,17 @@ const serviceVehicle = sequelize.define('Vehicle', {
     type: DataTypes.BOOLEAN,
     allowNull:true,
     defaultValue:false
-  }
+  },
+  commissionType: {
+    type: DataTypes.ENUM('percentage', 'amount'),
+    allowNull: false,
+    defaultValue: 'amount',
+  },
+  commission: {
+    type: DataTypes.FLOAT,
+    allowNull: false,
+    defaultValue: 0,
+  },
 }, {
   tableName: 'service_vehicles',
   timestamps: false,

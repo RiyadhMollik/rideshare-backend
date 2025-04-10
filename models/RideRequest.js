@@ -135,9 +135,6 @@ class RideRequest {
     if (!Array.isArray(bids)) {
       bids = []; // Initialize as an empty array if it's null or an object
     }
-    if (bids.length >= 5) {
-      throw new Error('Maximum number of bids reached');
-    }
     // Fetch the driver's profile to check the wallet balance
     const driverProfile = await User.findOne({ where: { user_id: riderId } });
     if (!driverProfile) {
@@ -172,15 +169,12 @@ class RideRequest {
       status: 'pending',
     });
     rideRequest.bids = bids;
-
     // Update the ride request with the new bid
     await RideRequestModel.update(
       { bids: rideRequest.bids },
       { where: { id: rideRequestId } }
     );
-
     return rideRequest;
-
   }
   static async updateBidStatus(rideRequestId, riderId, bidStatus) {
     try {
@@ -253,7 +247,7 @@ class RideRequest {
         { where: { id: rideRequestId } }
       );
       console.log(RideRequestModel);
-      
+
       return { success: true };
     } catch (err) {
       console.error('Failed to update ride request status:', err);
@@ -289,7 +283,7 @@ class RideRequest {
     }
   }
 
-  static async getAllRideRequests(status = null, page = 1, limit = 10) {
+  static async getAllRideRequests(status = null, page = 1, limit = 10, search = '') {
     try {
       // Initialize an empty whereClause
       const whereClause = {};
@@ -297,6 +291,14 @@ class RideRequest {
       // Add status filter to whereClause only if status is provided (not null)
       if (status) {
         whereClause.status = status;
+      }
+
+      if (search.trim() !== '') {
+        whereClause[Op.or] = [
+          { user_name: { [Op.like]: `%${search}%` } },
+          { user_number: { [Op.like]: `%${search}%` } },
+          { driver_name: { [Op.like]: `%${search}%` } },
+        ];
       }
       // Pagination logic
       const offset = (page - 1) * limit;
@@ -309,7 +311,8 @@ class RideRequest {
         where: whereClause,
         limit: parseInt(limit),
         offset: parseInt(offset),
-        order: [['createdAt', 'DESC']]
+        order: [['id', 'DESC']],
+
       });
       // Calculate total pages
       const total_pages = Math.ceil(totalRideRequests / limit);

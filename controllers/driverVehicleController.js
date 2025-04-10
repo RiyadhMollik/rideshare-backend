@@ -147,7 +147,26 @@ exports.getAllDriverVehicles = async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch driver vehicles', error: error.message });
   }
 };
+exports.getDriverVehiclesByDriverId = async (req, res) => {
+  const { driverId } = req.params;
 
+  try {
+    // Fetch all DriverVehicles associated with the driverId
+    const driverVehicles = await DriverVehicle.findAll({
+      where: { driverId },
+    });
+
+    if (driverVehicles.length === 0) {
+      return res.status(404).json({ message: 'No Driver Vehicles found for this driver' });
+    }
+
+    // Return the found driver vehicles
+    return res.status(200).json(driverVehicles);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
 // get single vehicle details by id
 exports.getDriverVehicleById = async (req, res) => {
   const { id } = req.params;

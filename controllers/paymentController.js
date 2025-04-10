@@ -28,7 +28,7 @@ exports.processPayment = async (req, res) => {
   const t = await sequelize.transaction();
   try {
     const rideRequest = await RideRequest.findByPk(rideRequestId);
-
+    const vehicle = await serviceVehicle.findByPk(rideRequest.vehicle_id);
     if (!rideRequest) {
       await t.rollback();
       return res.status(404).json({ message: 'Ride request not found' });
@@ -120,7 +120,6 @@ exports.processPayment = async (req, res) => {
       passenger.save({ transaction: t }),
       driver.save({ transaction: t }),
     ]);
-
     // Create transactions for admin commission, service charge, and driver payment
     const createTransaction = (userId, amount, description, paymentMethod) => Transaction.create({
       user_id: userId,

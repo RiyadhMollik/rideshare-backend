@@ -2,6 +2,7 @@ const User = require('../models/user');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const TransactionModel = require('../models/transaction');
+const { Op } = require('sequelize');
 // Existing function to get a user's own profile
 const getUserProfile = async (req, res) => {
   const userId = req.user.user_id;
@@ -12,7 +13,36 @@ const getUserProfile = async (req, res) => {
   }
   res.json(user);
 };
+const getCountAllDriverAndUser = async (req, res) => {
+  try {
+    // Get total user count
+    const totalUsers = await User.count();
 
+    // Get total drivers count
+    const totalDrivers = await User.count({
+      where: {
+        user_type: 'driver',
+      },
+    });
+
+    // Get total normal users count (non-driver)
+    const totalNormalUsers = await User.count({
+      where: {
+        user_type: 'normal',
+      },
+    });
+
+    // Send response
+    res.status(200).json({
+      totalUsers,
+      totalDrivers,
+      totalNormalUsers,
+    });
+  } catch (error) {
+    console.error('Error fetching counts:', error);
+    res.status(500).json({ message: 'Error fetching counts' });
+  }
+};
 const updateUserProfile = async (req, res) => {
   const userId = req.user.user_id;
   console.log(req.body);
@@ -68,36 +98,39 @@ const updateUserProfile = async (req, res) => {
 // New function to get all users (Admin Only)
 const getAllUsers = async (req, res) => {
   try {
-    // Get query parameters for pagination and filtering
-    const { user_type, page = 1, limit = 10 } = req.query;
-    
-    // Pagination logic
+    const { user_type, search = '', page = 1, limit = 10 } = req.query;
     const offset = (page - 1) * limit;
 
-    // Create filter object
+    // Build filter
     let filter = {};
-    
-    // If user_type is provided, add it to the filter
+
+    // Filter by user type
     if (user_type && ['normal', 'driver', 'admin'].includes(user_type)) {
       filter.user_type = user_type;
     }
 
-    // Fetch the total count of users based on the filter
-    const totalCount = await User.count({
-      where: filter,
-    });
+    // Add search condition
+    if (search.trim() !== '') {
+      filter[Op.or] = [
+        { name: { [Op.like]: `%${search}%` } },
+        { email: { [Op.like]: `%${search}%` } },
+        { phone_number: { [Op.like]: `%${search}%` } },
+      ];
+    }
 
-    // Fetch users with filtering and pagination
+    // Count total users with filters
+    const totalCount = await User.count({ where: filter });
+
+    // Fetch users with filters + pagination
     const users = await User.findAll({
       where: filter,
       limit: parseInt(limit),
       offset: parseInt(offset),
+      order: [['user_id', 'DESC']],
     });
-    
-    // Calculate the total number of pages
+
     const totalPages = Math.ceil(totalCount / limit);
 
-    // Return users along with pagination info
     res.json({
       users,
       pagination: {
@@ -269,5 +302,6 @@ module.exports = {
   updateUserWalletBalance,
   getUserTransactions,
  adminUpdateUserProfile ,
- deleteUser
+ deleteUser,
+ getCountAllDriverAndUser
 };
