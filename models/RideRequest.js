@@ -353,7 +353,8 @@ class RideRequest {
           id: nearbyRequestIds,
           status: 'bidding'
           // Assuming bids is an array and you want to check its length
-        }
+        },
+        order: [['createdAt', 'DESC']] // Sort by time, latest first
       });
 
       return rideRequests;

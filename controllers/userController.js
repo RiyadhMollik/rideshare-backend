@@ -46,7 +46,7 @@ const getCountAllDriverAndUser = async (req, res) => {
 const updateUserProfile = async (req, res) => {
   const userId = req.user.user_id;
   console.log(req.body);
-  const { name,email,gender, profile_picture, address, nid_photo, push_token, phone_number, referral_code , user_type } = req.body;
+  const { name, email, gender, profile_picture, address, nid_photo, push_token, phone_number, referral_code, user_type } = req.body;
   try {
     const user = await User.findByPk(userId);
     if (!user) {
@@ -98,7 +98,7 @@ const updateUserProfile = async (req, res) => {
 // New function to get all users (Admin Only)
 const getAllUsers = async (req, res) => {
   try {
-    const { user_type, search = '', page = 1, limit = 10 } = req.query;
+    const {is_verified, user_type, search = '', page = 1, limit = 10 } = req.query;
     const offset = (page - 1) * limit;
 
     // Build filter
@@ -109,6 +109,10 @@ const getAllUsers = async (req, res) => {
       filter.user_type = user_type;
     }
 
+    if (typeof is_verified !== 'undefined') {
+      if (is_verified === 'true') filter.is_verified = true;
+      else if (is_verified === 'false') filter.is_verified = false;
+    }
     // Add search condition
     if (search.trim() !== '') {
       filter[Op.or] = [
@@ -182,7 +186,7 @@ const getUserWalletBalance = async (req, res) => {
 };
 
 const updateUserWalletBalance = async (req, res) => {
-  
+
   const { userId, amount, description } = req.body; // `amount` and `description` are required
 
   try {
@@ -245,7 +249,7 @@ const getUserTransactions = async (req, res) => {
 // New function to update any user profile (Admin Only)
 const adminUpdateUserProfile = async (req, res) => {
   const userId = req.params.id;
-  const { name,wallet_balance, profile_picture, address, nid_photo, push_token, phone_number, user_type, is_verified } = req.body;
+  const { name, wallet_balance, profile_picture, address, nid_photo, push_token, phone_number, user_type, is_verified } = req.body;
 
   try {
     const user = await User.findByPk(userId);
@@ -293,15 +297,15 @@ const deleteUser = async (req, res) => {
   }
 };
 
-module.exports = { 
-  getUserProfile, 
-  updateUserProfile, 
-  getAllUsers, 
-  getUserById, 
+module.exports = {
+  getUserProfile,
+  updateUserProfile,
+  getAllUsers,
+  getUserById,
   getUserWalletBalance,
   updateUserWalletBalance,
   getUserTransactions,
- adminUpdateUserProfile ,
- deleteUser,
- getCountAllDriverAndUser
+  adminUpdateUserProfile,
+  deleteUser,
+  getCountAllDriverAndUser
 };

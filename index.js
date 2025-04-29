@@ -73,34 +73,38 @@ app.get('/', (req, res) => {
 });
 
 app.post("/send-notification", async (req, res) => {
-  const { title, body } = req.body;
+  const { title, body, user_type } = req.body;
 
   try {
-    // Fetch all users with a non-null push_token
-    const users = await User.findAll({
-      where: {
-        push_token: {
-          [Op.not]: null // Use imported Sequelize Op
-        }
+    // Build the where condition dynamically
+    const whereCondition = {
+      push_token: {
+        [Op.not]: null,
       },
-      attributes: ["push_token"], // Only fetch push_token
+    };
+
+    // Add user_type filter only if it's not "all"
+    if (user_type && user_type !== "all") {
+      whereCondition.user_type = user_type;
+    }
+
+    // Fetch users based on conditions
+    const users = await User.findAll({
+      where: whereCondition,
+      attributes: ["push_token"],
     });
 
-    // Extract push tokens into an array
     const tokens = users.map(user => user.push_token).filter(Boolean);
 
-    // Ensure we have valid tokens
     if (tokens.length === 0) {
       return res.status(400).json({ error: "No valid push tokens found" });
     }
 
-    // Create notification message
     const message = {
       notification: { title, body },
-      tokens, // Send to multiple tokens
+      tokens,
     };
 
-    // Send push notifications
     const response = await admin.messaging().sendEachForMulticast(message);
 
     res.status(200).json({ success: true, response });

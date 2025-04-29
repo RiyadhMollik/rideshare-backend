@@ -17,4 +17,5 @@ router.post('/ride-request/approved',adminOnly, rideRequestController.approveRid
 router.get('/ride-request/:id', rideRequestController.getRideRequestById);
 router.get('/ride-request/dashboard/all', rideRequestController.getRideRequestMetrics);
 router.post('/ride-request/update-location', rideRequestController.updateLocation);
+router.put('/ride-request/update-place/:id', rideRequestController.updateRideRequestPlaces);
 module.exports = router;

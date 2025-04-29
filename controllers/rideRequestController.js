@@ -273,3 +273,37 @@ exports.getRideRequestById = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+
+exports.updateRideRequestPlaces = async (req, res) => {
+  const { id } = req.params; // ID of the ride request
+  const { pickup_place, destination_place } = req.body; // Pickup and destination places
+
+  try {
+      // Validate the required fields
+      if (!pickup_place || !destination_place) {
+          return res.status(400).json({ message: "Pickup place and destination place are required" });
+      }
+
+      // Find the ride request by ID
+      const rideRequest = await rideRequestModel.findByPk(id);
+
+      // If the ride request doesn't exist
+      if (!rideRequest) {
+          return res.status(404).json({ message: "Ride request not found" });
+      }
+
+      // Update the pickup_place and destination_place fields
+      rideRequest.pickup_place = pickup_place;
+      rideRequest.destination_place = destination_place;
+
+      // Save the updated ride request
+      await rideRequest.save();
+
+      // Return the updated ride request
+      return res.status(200).json({ message: "Ride request updated successfully", rideRequest });
+  } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "Server error", error });
+  }
+};
