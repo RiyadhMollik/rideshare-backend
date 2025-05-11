@@ -2,12 +2,13 @@ const RideRequest = require('../models/RideRequest');
 const Driver = require('../models/riderModel');
 const rideRequestModel = require('../models/rideRequestModel');
 const { Op } = require('sequelize');
+const { User } = require('../models');
+const admin = require("firebase-admin");
 
 exports.getRideRequestMetrics = async (req, res) => {
     try {
         // Total Ride Requests
         const totalRideRequests = await rideRequestModel.count();
-
         // Total Ride Places
         const totalRidePlaces = await rideRequestModel.aggregate('pickup_place', 'DISTINCT', { plain: false });
         const destinationPlaces = await rideRequestModel.aggregate('destination_place', 'DISTINCT', { plain: false });
@@ -145,6 +146,31 @@ if(rideRequest.status=='bidding'){
     nearbyDriverSocketIds.forEach(socketId => {
       io.to(socketId).emit('rideRequest', rideRequest); // Emitting to a specific driver's socket
     });}
+
+    const title = 'New Ride Request';
+    const body = 'A new ride request has been created.';
+     const whereCondition = {
+      push_token: {
+        [Op.not]: null,
+      },
+    };
+
+    // Add user_type filter only if it's not "all"
+    whereCondition.user_type = 'driver';
+    // Fetch users based on conditions
+    const users = await User.findAll({
+      where: whereCondition,
+      attributes: ["push_token"],
+    });
+    const tokens = users.map(user => user.push_token).filter(Boolean);
+    if (tokens.length === 0) {
+      return res.status(400).json({ error: "No valid push tokens found" });
+    }
+    const message = {
+      notification: { title, body },
+      tokens,
+    };
+    await admin.messaging().sendEachForMulticast(message);
     res.status(201).json(rideRequest);
   } catch (error) {
     console.error('Error in createRideRequest controller:', error);
@@ -173,7 +199,6 @@ exports.approveRideRequest = async (req, res) => {
     res.status(500).json({ message: 'Failed to approve ride request', error: error.message });
   }
 }
-
 exports.getAllNearbyRideRequests = async (req, res) => {
   const { serviceId, vehicleType, latitude, longitude } = req.query;
   console.log(serviceId, vehicleType);
@@ -181,14 +206,12 @@ exports.getAllNearbyRideRequests = async (req, res) => {
   try {
     const rideRequests = await RideRequest.getAllNearby(serviceId, vehicleType, latitude, longitude);
     console.log(rideRequests);
-    
     res.status(200).json(rideRequests);
   } catch (error) {
     console.error('Error in getAllNearbyRideRequests controller:', error);
     res.status(500).json({ message: 'Failed to fetch nearby ride requests', error: error.message });
   }
 };
-
 exports.addBid = async (req, res) => {
   const { rideRequestId, bidAmount, profilePic, rating, name,vehicle,vehicleNumber,number, fcmToken,adminCommissionRate,serviceCharge } = req.body;
   const riderId = req.user.user_id; 
@@ -276,34 +299,33 @@ exports.getRideRequestById = async (req, res) => {
 
 
 exports.updateRideRequestPlaces = async (req, res) => {
-  const { id } = req.params; // ID of the ride request
-  const { pickup_place, destination_place } = req.body; // Pickup and destination places
+  const { id } = req.params;
+  const { pickup_place, destination_place } = req.body;
 
   try {
-      // Validate the required fields
-      if (!pickup_place || !destination_place) {
-          return res.status(400).json({ message: "Pickup place and destination place are required" });
+    if (!pickup_place || !destination_place) {
+      return res.status(400).json({ message: "Pickup place and destination place are required" });
+    }
+
+    // Use .update() to only touch specific fields
+    const [updatedRows] = await rideRequestModel.update(
+      { pickup_place, destination_place },
+      {
+        where: { id }
       }
+    );
 
-      // Find the ride request by ID
-      const rideRequest = await rideRequestModel.findByPk(id);
+    if (updatedRows === 0) {
+      return res.status(404).json({ message: "Ride request not found or nothing updated" });
+    }
 
-      // If the ride request doesn't exist
-      if (!rideRequest) {
-          return res.status(404).json({ message: "Ride request not found" });
-      }
+    const updatedRideRequest = await rideRequestModel.findByPk(id);
 
-      // Update the pickup_place and destination_place fields
-      rideRequest.pickup_place = pickup_place;
-      rideRequest.destination_place = destination_place;
-
-      // Save the updated ride request
-      await rideRequest.save();
-
-      // Return the updated ride request
-      return res.status(200).json({ message: "Ride request updated successfully", rideRequest });
+    return res.status(200).json({ message: "Ride request updated successfully", rideRequest: updatedRideRequest });
   } catch (error) {
-      console.error(error);
-      return res.status(500).json({ message: "Server error", error });
+    console.error(error);
+    return res.status(500).json({ message: "Server error", error });
   }
 };
+
+

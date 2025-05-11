@@ -87,7 +87,6 @@ app.post("/send-notification", async (req, res) => {
     if (user_type && user_type !== "all") {
       whereCondition.user_type = user_type;
     }
-
     // Fetch users based on conditions
     const users = await User.findAll({
       where: whereCondition,

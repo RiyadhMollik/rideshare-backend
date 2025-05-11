@@ -5,7 +5,7 @@ const { Op } = require('sequelize');
 const RideRequestModel = require('../models/rideRequestModel');
 const GlobalSettings = require('../models/settings');
 const User = require('../models/user');
-
+const admin = require("firebase-admin");
 class RideRequest {
   constructor(service_id, user_id, vehicle_type, pickup_point, destination, pickup_place, destination_place, user_name, user_pic, user_rating, user_number, time, fare, extra_details, user_fcm_token) {
     this.user_id = user_id;
@@ -174,6 +174,17 @@ class RideRequest {
       { bids: rideRequest.bids },
       { where: { id: rideRequestId } }
     );
+
+    const token = rideRequest.user_fcm_token;
+    const tokens = [token];
+    const title = 'Ride Request';
+    const body = 'Your Ride Has received a new bid';
+    const message = {
+      notification: { title, body },
+      tokens,
+    };
+    await admin.messaging().sendEachForMulticast(message);
+
     return rideRequest;
   }
   static async updateBidStatus(rideRequestId, riderId, bidStatus) {
@@ -218,7 +229,20 @@ class RideRequest {
           driver_fcm_token: rideRequest.driver_fcm_token,
           driver_rating: rideRequest.driver_rating,
         }, { where: { id: rideRequestId } });
+
+
+        bids[bidIndex].status = bidStatus;
+        const token = bids[bidIndex].fcmToken;
+        const tokens = [token];
+        const title = 'Ride Request';
+        const body = 'Your Bid Has been ' + bidStatus;
+        const message = {
+          notification: { title, body },
+          tokens,
+        };
+        await admin.messaging().sendEachForMulticast(message);
       }
+
 
       return rideRequest;
     } catch (err) {
@@ -354,7 +378,7 @@ class RideRequest {
           status: 'bidding'
           // Assuming bids is an array and you want to check its length
         },
-        order: [['createdAt', 'DESC']] // Sort by time, latest first
+        order: [['created_at', 'DESC']] // Sort by time, latest first
       });
 
       return rideRequests;

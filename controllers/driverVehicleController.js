@@ -147,7 +147,7 @@ exports.getAllDriverVehicles = async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch driver vehicles', error: error.message });
   }
 };
-exports.getDriverVehiclesByDriverId = async (req, res) => {
+exports.getDriversVehiclesByDriverId = async (req, res) => {
   const { driverId } = req.params;
 
   try {
