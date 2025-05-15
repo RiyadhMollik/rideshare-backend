@@ -153,7 +153,6 @@ class RideRequest {
     // if (Number(driverProfile.wallet_balance) < requiredAdminCommission) {
     //   throw { message: 'Insufficient balance to cover admin commission', type: 'INSUFFICIENT_BALANCE' };
     // }
-
     // Add the bid to the ride request
     bids.push({
       rideRequestId,
@@ -168,6 +167,7 @@ class RideRequest {
       fcmToken,
       status: 'pending',
     });
+
     rideRequest.bids = bids;
     // Update the ride request with the new bid
     await RideRequestModel.update(
@@ -177,8 +177,8 @@ class RideRequest {
 
     const token = rideRequest.user_fcm_token;
     const tokens = [token];
-    const title = 'Ride Request';
-    const body = 'Your Ride Has received a new bid';
+    const title = 'রাইডের অনুরোধ';
+    const body = 'আপনার যাত্রার জন্য কেউ নতুন দাম প্রস্তাব করেছে।';
     const message = {
       notification: { title, body },
       tokens,
@@ -230,12 +230,11 @@ class RideRequest {
           driver_rating: rideRequest.driver_rating,
         }, { where: { id: rideRequestId } });
 
-
         bids[bidIndex].status = bidStatus;
         const token = bids[bidIndex].fcmToken;
         const tokens = [token];
-        const title = 'Ride Request';
-        const body = 'Your Bid Has been ' + bidStatus;
+        const title = 'রাইডের অনুরোধ';
+        const body = 'আপনার বিড ' + bidStatus + ' হয়েছে';
         const message = {
           notification: { title, body },
           tokens,
@@ -265,12 +264,28 @@ class RideRequest {
           return { error: 'Invalid OTP' };
         }
       }
-
+      const rideRequest = await RideRequestModel.findOne({ where: { id: rideRequestId } });
+      const userToken = rideRequest.user_fcm_token;
+      const driverToken = rideRequest.driver_fcm_token;
+      let token = null;
+      if (newStatus === 'ride_active' || newStatus === 'arrived' || newStatus === 'ride_in_progress' || newStatus === 'ride_completed') {
+        token = userToken;
+      }
+      else{
+        token = driverToken;
+      }
+      const tokens = [token];
+      const title = 'রাইডের অনুরোধ';
+      const body = 'আপনার যাত্রা ' + newStatus + ' হয়েছে';
+      const message = {
+        notification: { title, body },
+        tokens,
+      };
+      await admin.messaging().sendEachForMulticast(message);
       await RideRequestModel.update(
         { status: newStatus },
         { where: { id: rideRequestId } }
       );
-      console.log(RideRequestModel);
 
       return { success: true };
     } catch (err) {
