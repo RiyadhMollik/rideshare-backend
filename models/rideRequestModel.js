@@ -71,7 +71,7 @@ const RideRequestModel = sequelize.define('RideRequest', {
     bids: {
         type: DataTypes.JSON,
         allowNull: true,
-        defaultValue: '[]'
+        defaultValue:[]
     },
     driver_id: {
         type: DataTypes.INTEGER,

@@ -2,7 +2,7 @@ const RideRequest = require('../models/RideRequest');
 const Driver = require('../models/riderModel');
 const rideRequestModel = require('../models/rideRequestModel');
 const { Op } = require('sequelize');
-const { User } = require('../models');
+const { User, VehicleType } = require('../models');
 const admin = require("firebase-admin");
 const DriverVehicle = require('../models/driverVehicle');
 
@@ -312,10 +312,12 @@ exports.getRideRequestById = async (req, res) => {
       return res.status(400).json({ error: "Ride request ID is required" });
     }
     const rideRequest = await rideRequestModel.findByPk(id); // Use findByPk or findOne
-    if (!rideRequest) {
+    const vehicle_type = await VehicleType.findByPk(rideRequest.vehicle_type);
+    
+    if (!rideRequest || !vehicle_type) {
       return res.status(404).json({ error: "Ride request not found" });
     }
-    res.status(200).json(rideRequest);
+    res.status(200).json( { rideRequest, vehicle_type });
   } catch (error) {
     console.error("Error fetching ride request:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -352,4 +354,19 @@ exports.updateRideRequestPlaces = async (req, res) => {
   }
 };
 
+exports.deleteRideRequest = async (req, res) => {
+  const { id } = req.params; 
 
+  try {
+    const rideRequest = await rideRequestModel.findByPk(id);
+    if (!rideRequest) {
+      return res.status(404).json({ message: 'Ride request not found' });
+    }
+
+    await rideRequest.destroy();
+
+    res.json({ message: 'ride request deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to delete ride request', error: error.message });
+  }
+};

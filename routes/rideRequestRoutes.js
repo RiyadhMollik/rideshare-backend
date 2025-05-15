@@ -18,4 +18,5 @@ router.get('/ride-request/:id', rideRequestController.getRideRequestById);
 router.get('/ride-request/dashboard/all', rideRequestController.getRideRequestMetrics);
 router.post('/ride-request/update-location', rideRequestController.updateLocation);
 router.put('/ride-request/update-place/:id', rideRequestController.updateRideRequestPlaces);
+router.delete('/ride-request/:id',adminOnly, rideRequestController.deleteRideRequest);
 module.exports = router;
