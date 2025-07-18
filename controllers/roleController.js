@@ -1,6 +1,6 @@
 import Role from "../models/Role.js";
 import Permission from "../models/Permission.js";
-import User from "../models/User.js";
+import User from "../models/user.js";
 // Fetch all roles
 export const getRoles = async (req, res) => {
   try {
