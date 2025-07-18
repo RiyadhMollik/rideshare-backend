@@ -9,7 +9,6 @@ const User = sequelize.define('users', {
   },
   email: {
     type: DataTypes.STRING,
-    unique: true,
   },
   phone_number: {
     type: DataTypes.STRING,
@@ -59,6 +58,14 @@ const User = sequelize.define('users', {
   rating: {
     type: DataTypes.DECIMAL(2, 1),
     defaultValue: 0.0,
+  },
+  roleId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'roles',
+      key: 'id',
+    },
   },
 }, {
   timestamps: false,

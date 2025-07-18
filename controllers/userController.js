@@ -297,6 +297,108 @@ const deleteUser = async (req, res) => {
   }
 };
 
+const addDriver = async (req, res) => {
+  const {
+    email,
+    phone_number,
+    name,
+    address,
+    gender,
+    vehicleTypeId,
+    image,
+    verified,
+    vehicleDetails,
+    status,
+  } = req.body;
+
+  // File uploads
+  const nid_photo = req.files?.nid_photo
+    ? `${req.protocol}://${req.get("host")}/uploads/${req.files.nid_photo[0].filename}`
+    : null;
+
+  const profile_picture = req.files?.profile_picture
+    ? `${req.protocol}://${req.get("host")}/uploads/${req.files.profile_picture[0].filename}`
+    : null;
+
+  const drivingLicense = req.files?.drivingLicense
+    ? `${req.protocol}://${req.get("host")}/uploads/${req.files.drivingLicense[0].filename}`
+    : null;
+
+  const vehiclePicFront = req.files?.vehiclePicFront
+    ? `${req.protocol}://${req.get("host")}/uploads/${req.files.vehiclePicFront[0].filename}`
+    : null;
+
+  try {
+    // Check if user already exists
+    const existingUser = await User.findOne({
+      where: {
+        [Op.or]: [{ email }, { phone_number }],
+      },
+    });
+
+    if (existingUser) {
+      return res.status(400).json({ message: "Email or phone number already registered" });
+    }
+
+    // Create the user
+    const driver = await User.create({
+      email,
+      phone_number,
+      name,
+      address,
+      nid_photo,
+      profile_picture,
+      gender,
+      user_type: "driver",
+      is_verified: false,
+      wallet_balance: 0.0,
+      rating: 0.0,
+    });
+
+    const vehicleType = await VehicleType.findByPk(vehicleTypeId);
+    if (!vehicleType) {
+      return res.status(400).json({ message: "Invalid vehicle type ID" });
+    }
+
+    // Construct documents object
+    const documents = {
+      nid: nid_photo,
+      drivingLicense,
+      vehiclePicFront,
+    };
+
+    // Create DriverVehicle entry
+    const driverVehicle = await DriverVehicle.create({
+      driverId: driver.user_id,
+      vehicleTypeId: vehicleType.id,
+      vehicleTypeName: vehicleType.name,
+      description: vehicleType.description,
+      image,
+      extraOptions: vehicleType.extraOptions,
+      documents,
+      verified,
+      vehicleDetails: vehicleDetails ? JSON.parse(vehicleDetails) : null,
+      status: status || "pending",
+    });
+
+    return res.status(201).json({
+      message: "Driver registered successfully",
+      driver: {
+        user_id: driver.user_id,
+        email: driver.email,
+        name: driver.name,
+        phone_number: driver.phone_number,
+        user_type: driver.user_type,
+      },
+      driverVehicle,
+    });
+  } catch (error) {
+    console.error("Error adding driver:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+
 module.exports = {
   getUserProfile,
   updateUserProfile,
@@ -307,5 +409,6 @@ module.exports = {
   getUserTransactions,
   adminUpdateUserProfile,
   deleteUser,
-  getCountAllDriverAndUser
+  getCountAllDriverAndUser,
+  addDriver
 };

@@ -2,6 +2,7 @@ const TopUpRequest = require('../models/topupRequest');  // Assuming the model i
 const User = require('../models/user');
 const sequelize = require('../config/database'); // Adjust according to your project
 const TransactionModel = require('../models/transaction');
+const { Op } = require('sequelize');
 exports.createTopUpRequest = async (req, res) => {
   const { amount, method, transactionId, image } = req.body;
 
@@ -38,23 +39,38 @@ exports.createTopUpRequest = async (req, res) => {
 };
 
 exports.getTopUpRequests = async (req, res) => {
-  const { page = 1, limit = 10, status = null } = req.query; // Default values if not provided
+  const { page = 1, limit = 10, status = null, search = '' } = req.query;
 
   try {
+    const offset = (page - 1) * limit;
+
+    // Base where clause
     const whereClause = {};
 
-    // Add status filter to whereClause only if status is provided (not null)
     if (status) {
       whereClause.status = status;
     }
-    const offset = (page - 1) * limit;
+
+    if (search.trim() !== '') {
+      whereClause[Op.or] = [
+        { transaction_id: { [Op.like]: `%${search}%` } },
+        { method: { [Op.like]: `%${search}%` } },
+        { '$User.name$': { [Op.like]: `%${search}%` } },
+        { '$User.email$': { [Op.like]: `%${search}%` } },
+      ];
+    }
 
     const topUpRequests = await TopUpRequest.findAndCountAll({
       where: whereClause,
+      include: [
+        {
+          model: User,
+          attributes: ['user_id', 'name', 'email'],
+        },
+      ],
       offset: parseInt(offset, 10),
       limit: parseInt(limit, 10),
-      include: [{ model: User, attributes: ['user_id', 'name', 'email'] }], // Adjust based on your `User` model
-      order: [['created_at', 'DESC']], // Sort by most recent
+      order: [['created_at', 'DESC']],
     });
 
     const totalPages = Math.ceil(topUpRequests.count / limit);
@@ -69,7 +85,11 @@ exports.getTopUpRequests = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to retrieve top-up requests', error: error.message });
+    console.error('Error in getTopUpRequests:', error);
+    res.status(500).json({
+      message: 'Failed to retrieve top-up requests',
+      error: error.message,
+    });
   }
 };
 

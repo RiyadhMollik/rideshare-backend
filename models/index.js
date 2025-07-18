@@ -7,6 +7,7 @@ const VehicleType = require('./vehicleType');
 const Service = require('./service');
 const serviceVehicle = require('./serviceVehicle');
 const TopUpRequest = require('./topupRequest');
+const Role = require('./Role');
 // Define associations
 // Define associations
 // Service has many Vehicles
@@ -55,7 +56,8 @@ User.hasMany(RideRequestModel, { foreignKey: 'driver_id', as: 'driver' });
 User.hasMany(RideRequestModel, { foreignKey: 'user_id', as: 'passenger' });
 TopUpRequest.belongsTo(User, { foreignKey: 'user_id' }); // Each top-up request belongs to a user
 User.hasMany(TopUpRequest, { foreignKey: 'user_id' }); // A user can have many top-up requests
-
+User.belongsTo(Role, { foreignKey: 'roleId', as: 'Role' });
+Role.hasMany(User, { foreignKey: 'roleId', as: 'Users' });
 
 
 // Export models for usage in the app

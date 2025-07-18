@@ -9,11 +9,12 @@ const RideSharingRequestModel = sequelize.define('RideSharingRequest', {
     },
     ride_sharing_id: {
         type: DataTypes.INTEGER,
-        allowNull: false,
         references: {
             model: 'RideSharing',
             key: 'id'
-        }
+        },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
     },
     passenger_id: {
         type: DataTypes.INTEGER,

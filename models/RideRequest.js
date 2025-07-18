@@ -131,9 +131,8 @@ class RideRequest {
     if (rideRequest.status !== 'bidding') {
       throw new Error('Ride already booked');
     }
-    let bids = rideRequest.bids;
     if (!Array.isArray(bids)) {
-      bids = []; // Initialize as an empty array if it's null or an object
+      bids = bids ? [bids] : [];
     }
     // Fetch the driver's profile to check the wallet balance
     const driverProfile = await User.findOne({ where: { user_id: riderId } });
@@ -241,8 +240,6 @@ class RideRequest {
         };
         await admin.messaging().sendEachForMulticast(message);
       }
-
-
       return rideRequest;
     } catch (err) {
       console.error('Failed to update bid status:', err);
@@ -271,7 +268,7 @@ class RideRequest {
       if (newStatus === 'ride_active' || newStatus === 'arrived' || newStatus === 'ride_in_progress' || newStatus === 'ride_completed') {
         token = userToken;
       }
-      else{
+      else {
         token = driverToken;
       }
       const tokens = [token];
@@ -324,14 +321,25 @@ class RideRequest {
 
   static async getAllRideRequests(status = null, page = 1, limit = 10, search = '') {
     try {
-      // Initialize an empty whereClause
       const whereClause = {};
 
-      // Add status filter to whereClause only if status is provided (not null)
-      if (status) {
+      // Handle status filtering
+      if (status && status !== 'expired') {
         whereClause.status = status;
       }
 
+      // Special logic for expired
+      if (status === 'expired') {
+        whereClause.time = {
+          [Op.lt]: new Date() // time is less than now => expired
+        };
+        // Optional: include only specific statuses like 'pending' or 'bidding'
+        whereClause.status = {
+          [Op.in]: ['pending', 'bidding', 'ride_placed']
+        };
+      }
+
+      // Search filters
       if (search.trim() !== '') {
         whereClause[Op.or] = [
           { user_name: { [Op.like]: `%${search}%` } },
@@ -339,24 +347,21 @@ class RideRequest {
           { driver_name: { [Op.like]: `%${search}%` } },
         ];
       }
-      // Pagination logic
+
+      // Pagination
       const offset = (page - 1) * limit;
 
-      // Fetch the total number of matching ride requests for pagination metadata
       const totalRideRequests = await RideRequestModel.count({ where: whereClause });
 
-      // Fetch paginated ride requests
       const rideRequests = await RideRequestModel.findAll({
         where: whereClause,
         limit: parseInt(limit),
         offset: parseInt(offset),
         order: [['id', 'DESC']],
-
       });
-      // Calculate total pages
+
       const total_pages = Math.ceil(totalRideRequests / limit);
 
-      // Return the paginated data along with pagination metadata
       return {
         rideRequests,
         pagination: {

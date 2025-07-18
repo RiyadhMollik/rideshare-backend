@@ -24,6 +24,7 @@ const busRoutes = require('./routes/busroutes');
 const walletRoutes = require('./routes/walletRoutes');
 const typeDefs = require('./graphql/typeDefs/rideSchema');
 const resolvers = require('./graphql/resolvers/rideResolvers');
+const roleRoutes = require('./routes/roleRoutes');
 const { Op } = require("sequelize"); // Import Sequelize Op
 const { validateToken } = require('./utils/jwtUtils');
 const serviceAccount = require("./config/ride-sharing-54f52-firebase-adminsdk-v7oa1-82297cbb2a.json");
@@ -65,6 +66,7 @@ app.use('/api', rideSharingRoutes);
 app.use('/api', settingsRoutes);
 app.use('/api', busRoutes);
 app.use('/api/wallet', walletRoutes);
+app.use('/api/roles', roleRoutes);
 
 app.get('/', (req, res) => {
   console.log('Welcome to the API v11');
@@ -166,7 +168,10 @@ applyApolloMiddleware();
 
 // Connect to the database
 sequelize.authenticate()
-  .then(() => console.log('Database connected...'))
+  .then(() => {
+    sequelize.sync({ alter: true })
+    console.log('Database connected...')
+  })
   .catch(err => console.log('Error: ' + err));
 
 // Set up Socket.io instance for routes

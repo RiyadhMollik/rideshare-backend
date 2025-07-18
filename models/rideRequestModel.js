@@ -85,6 +85,10 @@ const RideRequestModel = sequelize.define('RideRequest', {
         type: DataTypes.STRING,
         allowNull: false
     },
+    // bids_Amount: {
+    //     type: DataTypes.DECIMAL(10, 2),
+    //     allowNull: true
+    // },
     otp: {
         type: DataTypes.INTEGER,
         allowNull: true

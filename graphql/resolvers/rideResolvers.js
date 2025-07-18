@@ -93,7 +93,26 @@ const resolvers = {
         // Filter condition for Normal Rides
         let normalWhereClause = isDriver ? { driver_id: user.user_id } : { user_id: user.user_id };
         console.log('normalWhereClause:', normalWhereClause);
-        
+
+        let pendingBidRides = [];
+
+        if (isDriver && filter === 'running') {
+          // Fetch only 'pending' rides
+          const pendingRides = await RideRequestModel.findAll({
+            where: { status: 'pending' }
+          });
+
+          // Filter those where the driver has placed a bid
+          pendingBidRides = pendingRides
+            .filter(ride => {
+              const bids = Array.isArray(ride.bids) ? ride.bids : [];
+              return bids.some(bid => bid.riderId === user.user_id);
+            })
+            .map(ride => ({
+              ...ride.toJSON(),
+              type: 'NormalRide'
+            }));
+        }
         // Apply filter to Normal Rides
         if (filter === 'history') {
           normalWhereClause[Op.or] = [
@@ -174,8 +193,13 @@ const resolvers = {
           type: isDriver ? 'ShareRide' : 'ShareRideRequest',
         }));
         // Combine both normal rides and share rides
-        const combinedRides = [...normalRidesWithType, ...shareRidesWithType];
-        return combinedRides;
+        const uniqueCombinedRides = Object.values(
+          [...normalRidesWithType, ...pendingBidRides, ...shareRidesWithType].reduce((acc, ride) => {
+            acc[ride.id] = ride;
+            return acc;
+          }, {})
+        );
+        return uniqueCombinedRides;
       } catch (error) {
         console.error('Error fetching combined rides:', error);
         throw new Error('Error fetching combined rides');
