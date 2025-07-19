@@ -131,11 +131,6 @@ class RideRequest {
     if (rideRequest.status !== 'bidding') {
       throw new Error('Ride already booked');
     }
-    // Check if the rider has already placed a bid
-    const existingBid = rideRequest.bids.find(bid => bid.riderId === riderId);
-    if (existingBid) {
-      throw new Error('Rider has already placed a bid');
-    }
     // Get the existing bids
     let bids = rideRequest.bids;
     // Add the new bid to the bids array
