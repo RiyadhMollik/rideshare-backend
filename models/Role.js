@@ -19,6 +19,20 @@ Role.afterCreate(async (role) => {
   const defaultPermissions = [
     "Roles",
     "Permissions",
+    "Add Service",
+    "Service List",
+    "Create Admin User",
+    "Add Vehicle Type",
+    "Vehicle Type List",
+    "Add Vehicle To Service",
+    "Vehicle To Service List",
+    "Users",
+    "All Driver Vehicle",
+    "Ride Request",
+    "Topup Request",
+    "Messege",
+    "Global Setting",
+    "Profile"
   ];
 
   await Promise.all(
