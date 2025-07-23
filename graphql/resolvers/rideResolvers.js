@@ -91,7 +91,6 @@ const resolvers = {
       }
       try {
         let normalWhereClause = isDriver ? { driver_id: user.user_id } : { user_id: user.user_id };
-        console.log('normalWhereClause:', normalWhereClause);
         let pendingBidRides = [];
         if (isDriver && filter === 'running') {
           // Fetch only 'pending' rides
@@ -111,8 +110,6 @@ const resolvers = {
               type: 'NormalRide'
             }));
         }
-        console.log('pendingBidRides:', pendingBidRides);
-        
         // Apply filter to Normal Rides
         if (filter === 'history') {
           normalWhereClause[Op.or] = [
