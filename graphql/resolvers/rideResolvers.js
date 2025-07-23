@@ -97,6 +97,7 @@ const resolvers = {
           const pendingRides = await RideRequestModel.findAll({
             where: { status: 'pending' }
           });
+          console.log('Pending rides:', pendingRides.length);
           // Filter those where the driver has placed a bid
           pendingBidRides = pendingRides
             .filter(ride => {
