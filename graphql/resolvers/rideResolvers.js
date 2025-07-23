@@ -104,7 +104,7 @@ const resolvers = {
               const bids = Array.isArray(ride.bids) ? ride.bids : JSON.parse(ride.bids) ;
               bids.forEach(bid => console.log("bid.riderId:", bid.riderId));
               bids.forEach(bid => console.log("user.user_id:", user.user_id));
-              return bids.some(bid => bid.riderId === 4710);
+              return bids.some(bid => bid.riderId === 6462);
             })
             .map(ride => ({
               ...ride.toJSON(),
