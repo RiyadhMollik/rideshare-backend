@@ -93,15 +93,11 @@ const resolvers = {
         let normalWhereClause = isDriver ? { driver_id: user.user_id } : { user_id: user.user_id };
         let pendingBidRides = [];
         if (isDriver && filter === 'running') {
-          // Fetch only 'pending' rides
           const pendingRides = await RideRequestModel.findAll({
             where: { status: 'bidding' }
           });
-          console.log('Pending rides:', pendingRides.length);
-          // Filter those where the driver has placed a bid
           pendingBidRides = pendingRides
             .filter(ride => {
-              console.log(ride.bids);
               const bids = Array.isArray(ride.bids) ? ride.bids : JSON.parse(ride.bids) ;
               return bids.some(bid => bid.riderId === user.user_id);
             })
@@ -110,7 +106,6 @@ const resolvers = {
               type: 'NormalRide'
             }));
         }
-        // Apply filter to Normal Rides
         if (filter === 'history') {
           normalWhereClause[Op.or] = [
             { status: 'ride_canceled' },
@@ -118,7 +113,6 @@ const resolvers = {
           ];
         } else if (filter === 'running') {
           normalWhereClause[Op.or] = [
-            //TODO:: work on pending & ride_placed showing.
             { status: 'pending' },
             { status: 'bidding' },
             // { status: 'ride_placed' },
@@ -127,7 +121,6 @@ const resolvers = {
             { status: 'ride_in_progress' }
           ];
         }
-        // Fetch Normal Rides
         const normalRides = await RideRequestModel.findAll({
           where: normalWhereClause,
           include: [
