@@ -169,14 +169,12 @@ class RideRequest {
       fcmToken,
       status: 'pending',
     });
-
     rideRequest.bids = bids;
     // Update the ride request with the new bid
     await RideRequestModel.update(
       { bids: rideRequest.bids },
       { where: { id: rideRequestId } }
     );
-
     const token = rideRequest.user_fcm_token;
     const tokens = [token];
     const title = 'রাইডের অনুরোধ';
