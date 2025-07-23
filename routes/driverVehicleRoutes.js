@@ -6,7 +6,6 @@ const { adminOnly } = require('../middleware/adminMiddleware');
 
 // Create a new driver vehicle
 router.post('/driver-vehicles', authenticateToken, DriverVehicleController.createDriverVehicle);
-
 // Get all driver vehicles (admin only)
 router.get('/driver-vehicles', adminOnly, DriverVehicleController.getAllDriverVehicles);
 

@@ -1,6 +1,6 @@
 //here is the resolver for the ride sharing schema
 
-const { RideSharing, RideSharingRequest, User, RideRequestModel } = require('../../models'); // Adjust the path as needed
+const { RideSharing, RideSharingRequest, User, RideRequestModel } = require('../../models'); 
 const { Op } = require('sequelize');
 const resolvers = {
   Query: {
@@ -90,22 +90,20 @@ const resolvers = {
         throw new Error('User not authenticated');
       }
       try {
-        // Filter condition for Normal Rides
         let normalWhereClause = isDriver ? { driver_id: user.user_id } : { user_id: user.user_id };
         console.log('normalWhereClause:', normalWhereClause);
-
         let pendingBidRides = [];
-
         if (isDriver && filter === 'running') {
           // Fetch only 'pending' rides
           const pendingRides = await RideRequestModel.findAll({
             where: { status: 'pending' }
           });
-
           // Filter those where the driver has placed a bid
           pendingBidRides = pendingRides
             .filter(ride => {
-              const bids = Array.isArray(ride.bids) ? ride.bids : [];
+              const bids = Array.isArray(ride.bids) ? ride.bids : JSON.parse(ride.bids) ;
+              bids.forEach(bid => console.log("bid.riderId:", bid.riderId));
+              bids.forEach(bid => console.log("user.user_id:", user.user_id));
               return bids.some(bid => bid.riderId === user.user_id);
             })
             .map(ride => ({
@@ -113,6 +111,8 @@ const resolvers = {
               type: 'NormalRide'
             }));
         }
+        console.log('pendingBidRides:', pendingBidRides);
+        
         // Apply filter to Normal Rides
         if (filter === 'history') {
           normalWhereClause[Op.or] = [
@@ -193,12 +193,7 @@ const resolvers = {
           type: isDriver ? 'ShareRide' : 'ShareRideRequest',
         }));
         // Combine both normal rides and share rides
-        const uniqueCombinedRides = Object.values(
-          [...normalRidesWithType, ...pendingBidRides, ...shareRidesWithType].reduce((acc, ride) => {
-            acc[ride.id] = ride;
-            return acc;
-          }, {})
-        );
+        const uniqueCombinedRides = [...normalRidesWithType, ...pendingBidRides, ...shareRidesWithType];
         return uniqueCombinedRides;
       } catch (error) {
         console.error('Error fetching combined rides:', error);

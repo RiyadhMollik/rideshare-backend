@@ -169,7 +169,7 @@ applyApolloMiddleware();
 // Connect to the database
 sequelize.authenticate()
   .then(() => {
-    sequelize.sync({ alter: true })
+    // sequelize.sync({ alter: true })
     console.log('Database connected...')
   })
   .catch(err => console.log('Error: ' + err));

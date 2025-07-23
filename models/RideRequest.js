@@ -135,7 +135,7 @@ class RideRequest {
     let bids = rideRequest.bids;
     // Add the new bid to the bids array
     if (!Array.isArray(bids)) {
-      bids = bids ? [bids] : [];
+      bids = bids ? JSON.parse(bids) : [];
     }
     // Fetch the driver's profile to check the wallet balance
     const driverProfile = await User.findOne({ where: { user_id: riderId } });
