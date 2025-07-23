@@ -101,10 +101,9 @@ const resolvers = {
           // Filter those where the driver has placed a bid
           pendingBidRides = pendingRides
             .filter(ride => {
+              console.log(ride.bids);
               const bids = Array.isArray(ride.bids) ? ride.bids : JSON.parse(ride.bids) ;
-              bids.forEach(bid => console.log("bid.riderId:", bid.riderId));
-              bids.forEach(bid => console.log("user.user_id:", user.user_id));
-              return bids.some(bid => bid.riderId === 6462);
+              return bids.some(bid => bid.riderId === user.user_id);
             })
             .map(ride => ({
               ...ride.toJSON(),
