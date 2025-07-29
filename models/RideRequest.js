@@ -319,13 +319,12 @@ class RideRequest {
   static async getAllRideRequests(status = null, page = 1, limit = 10, search = '') {
     try {
       const whereClause = {};
-
-      // Handle status filtering
-      if (status && status !== 'expired' && status !== 'bids') {
+      // General statuses
+      if (status && !['expired', 'bids', 'bidding'].includes(status)) {
         whereClause.status = status;
       }
 
-      // Special logic for expired
+      // Expired: time < now && status in [pending, bidding, ride_placed]
       if (status === 'expired') {
         whereClause.time = {
           [Op.lt]: new Date()
@@ -334,15 +333,13 @@ class RideRequest {
           [Op.in]: ['pending', 'bidding', 'ride_placed']
         };
       }
-
-      // Special logic for bids status
-      if (status === 'bids') {
-        whereClause.bids = {
-          [Op.not]: null
+      // For both 'bids' and 'bidding', fetch potential matches
+      if (status === 'bids' || status === 'bidding') {
+        whereClause.status = {
+          [Op.in]: ['bidding']
         };
       }
-
-      // Search filters
+      // Search
       if (search.trim() !== '') {
         whereClause[Op.or] = [
           { user_name: { [Op.like]: `%${search}%` } },
@@ -350,52 +347,32 @@ class RideRequest {
           { driver_name: { [Op.like]: `%${search}%` } },
         ];
       }
-
-      // Pagination
       const offset = (page - 1) * limit;
-
-      let rideRequests;
-      let totalRideRequests;
+      // Fetch everything matching the base condition
+      const allMatching = await RideRequestModel.findAll({
+        where: whereClause,
+        order: [['id', 'DESC']]
+      });
+      let filtered = allMatching;
 
       if (status === 'bids') {
-        // PostgreSQL-specific raw SQL for filtering where JSON array length > 0
-        rideRequests = await RideRequestModel.findAll({
-          where: whereClause,
-          limit: parseInt(limit),
-          offset: parseInt(offset),
-          order: [['id', 'DESC']],
-          // raw SQL for checking bids JSON array length > 0
-          // only works in PostgreSQL
-          where: literal("json_array_length(bids) > 0")
+        filtered = allMatching.filter(item => {
+          const bids = JSON.parse(item.bids);
+          return bids.length > 0;
         });
-
-        // Get total count with same condition
-        totalRideRequests = await RideRequestModel.count({
-          where: {
-            ...whereClause,
-            [Op.and]: [literal("json_array_length(bids) > 0")]
-          }
+      } else if (status === 'bidding') {
+        filtered = allMatching.filter(item => {
+          const bids = JSON.parse(item.bids);
+          return bids.length === 0;
         });
-
-      } else {
-        // Normal findAll for other statuses
-        rideRequests = await RideRequestModel.findAll({
-          where: whereClause,
-          limit: parseInt(limit),
-          offset: parseInt(offset),
-          order: [['id', 'DESC']],
-        });
-
-        totalRideRequests = await RideRequestModel.count({ where: whereClause });
       }
-
-      const total_pages = Math.ceil(totalRideRequests / limit);
+      const paginated = filtered.slice(offset, offset + limit);
 
       return {
-        rideRequests,
+        rideRequests: paginated,
         pagination: {
-          total_items: totalRideRequests,
-          total_pages,
+          total_items: filtered.length,
+          total_pages: Math.ceil(filtered.length / limit),
           current_page: page,
           page_size: limit
         }
@@ -405,6 +382,7 @@ class RideRequest {
       throw new Error('Failed to fetch ride requests');
     }
   }
+  
   static async getAllNearby(serviceId, vehicleType, latitude, longitude, radius = 2) {
     try {
       // Fetch nearby IDs from Redis
