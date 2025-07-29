@@ -74,22 +74,23 @@ app.get('/', (req, res) => {
   res.json({ message: 'Welcome to the API v11' });
 });
 
+const CHUNK_SIZE = 450;
+
 app.post("/send-notification", async (req, res) => {
   const { title, body, user_type } = req.body;
 
   try {
-    // Build the where condition dynamically
     const whereCondition = {
       push_token: {
         [Op.not]: null,
       },
     };
 
-    // Add user_type filter only if it's not "all"
     if (user_type && user_type !== "all") {
       whereCondition.user_type = user_type;
     }
-    // Fetch users based on conditions
+
+    // Fetch users
     const users = await User.findAll({
       where: whereCondition,
       attributes: ["push_token"],
@@ -101,19 +102,31 @@ app.post("/send-notification", async (req, res) => {
       return res.status(400).json({ error: "No valid push tokens found" });
     }
 
-    const message = {
-      notification: { title, body },
-      tokens,
-    };
-
-    const response = await admin.messaging().sendEachForMulticast(message);
-
-    res.status(200).json({ success: true, response });
+    const chunks = [];
+    for (let i = 0; i < tokens.length; i += CHUNK_SIZE) {
+      chunks.push(tokens.slice(i, i + CHUNK_SIZE));
+    }
+    const responses = [];
+    for (const chunk of chunks) {
+      const message = {
+        notification: { title, body },
+        tokens: chunk,
+      };
+      const response = await admin.messaging().sendEachForMulticast(message);
+      responses.push(response);
+    }
+    res.status(200).json({
+      success: true,
+      message: "Notifications sent successfully",
+      totalChunks: chunks.length,
+      responses,
+    });
   } catch (error) {
     console.error("Error sending notification:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {

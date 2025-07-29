@@ -30,13 +30,9 @@ class RideRequest {
     try {
       const globalSettings = await GlobalSettings.findOne();
       const approveNeed = globalSettings.approveNeed || false;
-
-      this.status = approveNeed ? 'pending' : 'bidding'; // Set status based on approveNeed
+      this.status = approveNeed ? 'pending' : 'bidding'; 
       const otp = generateOtp();
-
-
       console.log(otp);
-
       // Save ride request to MySQL without manually setting the id
       const savedRideRequest = await RideRequestModel.create({
         user_id: this.user_id,
