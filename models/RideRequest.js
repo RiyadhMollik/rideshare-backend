@@ -1,7 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
 const redisClient = require('../config/redis');
 const generateOtp = require('../utils/generateOtp');
-const { Op } = require('sequelize');
+const { Op, literal } = require('sequelize');
 const RideRequestModel = require('../models/rideRequestModel');
 const GlobalSettings = require('../models/settings');
 const User = require('../models/user');
@@ -30,7 +30,7 @@ class RideRequest {
     try {
       const globalSettings = await GlobalSettings.findOne();
       const approveNeed = globalSettings.approveNeed || false;
-      this.status = approveNeed ? 'pending' : 'bidding'; 
+      this.status = approveNeed ? 'pending' : 'bidding';
       const otp = generateOtp();
       console.log(otp);
       // Save ride request to MySQL without manually setting the id
@@ -321,18 +321,24 @@ class RideRequest {
       const whereClause = {};
 
       // Handle status filtering
-      if (status && status !== 'expired') {
+      if (status && status !== 'expired' && status !== 'bids') {
         whereClause.status = status;
       }
 
       // Special logic for expired
       if (status === 'expired') {
         whereClause.time = {
-          [Op.lt]: new Date() // time is less than now => expired
+          [Op.lt]: new Date()
         };
-        // Optional: include only specific statuses like 'pending' or 'bidding'
         whereClause.status = {
           [Op.in]: ['pending', 'bidding', 'ride_placed']
+        };
+      }
+
+      // Special logic for bids status
+      if (status === 'bids') {
+        whereClause.bids = {
+          [Op.not]: null
         };
       }
 
@@ -348,14 +354,40 @@ class RideRequest {
       // Pagination
       const offset = (page - 1) * limit;
 
-      const totalRideRequests = await RideRequestModel.count({ where: whereClause });
+      let rideRequests;
+      let totalRideRequests;
 
-      const rideRequests = await RideRequestModel.findAll({
-        where: whereClause,
-        limit: parseInt(limit),
-        offset: parseInt(offset),
-        order: [['id', 'DESC']],
-      });
+      if (status === 'bids') {
+        // PostgreSQL-specific raw SQL for filtering where JSON array length > 0
+        rideRequests = await RideRequestModel.findAll({
+          where: whereClause,
+          limit: parseInt(limit),
+          offset: parseInt(offset),
+          order: [['id', 'DESC']],
+          // raw SQL for checking bids JSON array length > 0
+          // only works in PostgreSQL
+          where: literal("json_array_length(bids) > 0")
+        });
+
+        // Get total count with same condition
+        totalRideRequests = await RideRequestModel.count({
+          where: {
+            ...whereClause,
+            [Op.and]: [literal("json_array_length(bids) > 0")]
+          }
+        });
+
+      } else {
+        // Normal findAll for other statuses
+        rideRequests = await RideRequestModel.findAll({
+          where: whereClause,
+          limit: parseInt(limit),
+          offset: parseInt(offset),
+          order: [['id', 'DESC']],
+        });
+
+        totalRideRequests = await RideRequestModel.count({ where: whereClause });
+      }
 
       const total_pages = Math.ceil(totalRideRequests / limit);
 
@@ -373,8 +405,6 @@ class RideRequest {
       throw new Error('Failed to fetch ride requests');
     }
   }
-
-
   static async getAllNearby(serviceId, vehicleType, latitude, longitude, radius = 2) {
     try {
       // Fetch nearby IDs from Redis
