@@ -37,6 +37,19 @@ const typeDefs = gql`
     fare: Float
     ride: ShareRide  # Add this field to the schema
   }
+  type Bid {
+    rideRequestId: Int
+    riderId: Int
+    bidAmount: Float
+    profilePic: String
+    rating: Float
+    name: String
+    vehicle: String
+    vehicleNumber: String
+    number: String
+    fcmToken: String
+  }
+
  type NormalRide {
     id: Int
     type: String 
@@ -64,6 +77,7 @@ const typeDefs = gql`
     driver_rating: Float
     time: DateTime
     otp: Int
+    bids: [Bid] 
   }
   type User {
     user_id: Int

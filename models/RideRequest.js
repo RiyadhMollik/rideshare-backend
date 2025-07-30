@@ -367,7 +367,6 @@ class RideRequest {
         });
       }
       const paginated = filtered.slice(offset, offset + limit);
-
       return {
         rideRequests: paginated,
         pagination: {

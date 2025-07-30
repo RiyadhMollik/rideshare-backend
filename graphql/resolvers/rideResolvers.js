@@ -1,6 +1,6 @@
 //here is the resolver for the ride sharing schema
 
-const { RideSharing, RideSharingRequest, User, RideRequestModel } = require('../../models'); 
+const { RideSharing, RideSharingRequest, User, RideRequestModel } = require('../../models');
 const { Op } = require('sequelize');
 const resolvers = {
   Query: {
@@ -98,7 +98,7 @@ const resolvers = {
           });
           pendingBidRides = pendingRides
             .filter(ride => {
-              const bids = Array.isArray(ride.bids) ? ride.bids : JSON.parse(ride.bids) ;
+              const bids = Array.isArray(ride.bids) ? ride.bids : JSON.parse(ride.bids);
               return bids.some(bid => bid.riderId === user.user_id);
             })
             .map(ride => ({
@@ -205,6 +205,19 @@ const resolvers = {
       }
 
       return null;
+    }
+  },
+  NormalRide: {
+    bids: (parent) => {
+      if (!parent.bids) return [];
+      try {
+        return typeof parent.bids === 'string'
+          ? JSON.parse(parent.bids)
+          : parent.bids;
+      } catch (error) {
+        console.error('Error parsing bids:', error);
+        return [];
+      }
     }
   }
 
